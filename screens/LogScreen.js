@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, StyleSheet, Modal, Alert,
-  DeviceEventEmitter, Platform, PermissionsAndroid
+  DeviceEventEmitter, Platform, PermissionsAndroid,
+  Linking
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { parseMpesaSMS } from '../services/SmsListener';
@@ -19,6 +20,8 @@ const CATS = [
   { id: 'other', label: 'Other', icon: '📦' },
 ];
 
+const TEST_SMS = "FKA23X Confirmed. Ksh500.00 sent to TEST USER 0712345678 on 27/9/26 at 12:00 PM. New M-PESA balance is Ksh5,000.00.";
+
 export default function LogScreen() {
   const [sms, setSms] = useState('');
   const [parsed, setParsed] = useState(null);
@@ -28,8 +31,9 @@ export default function LogScreen() {
   const [step, setStep] = useState(1);
   const [showOverlay, setShowOverlay] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [notifGranted, setNotifGranted] = useState(false);
 
-  // Auto SMS listener — fires when M-Pesa SMS arrives
+  // Listen for M-Pesa events from Java
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       'onMpesaSmsReceived',
@@ -49,18 +53,30 @@ export default function LogScreen() {
     return () => subscription.remove();
   }, []);
 
+  // Request SMS + notification permissions
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.RECEIVE_SMS,
+        PermissionsAndroid.PERMISSIONS.READ_SMS,
+      ]);
+    }
+  }, []);
 
-  // Request SMS permission at runtime
-useEffect(() => {
-  if (Platform.OS === 'android') {
-    PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.RECEIVE_SMS,
-      PermissionsAndroid.PERMISSIONS.READ_SMS,
-    ]).then(result => {
-      console.log('SMS permissions:', result);
-    });
+  // Prompt for notification listener access
+  function requestNotificationAccess() {
+    Alert.alert(
+      'Enable Auto-Detection',
+      'PesaLog needs Notification Access to automatically detect M-Pesa transactions.\n\n1. Find PesaLog in the list\n2. Toggle it ON\n3. Come back to PesaLog',
+      [
+        { text: 'Later', style: 'cancel' },
+        {
+          text: 'Open Settings',
+          onPress: () => Linking.openSettings(),
+        }
+      ]
+    );
   }
-}, []);
 
   function handleParse() {
     const result = parseMpesaSMS(sms);
@@ -136,8 +152,20 @@ useEffect(() => {
         </View>
       )}
 
+      {/* Setup card */}
+      <View style={styles.setupCard}>
+        <Text style={styles.setupTitle}>⚡ Enable Auto-Detection</Text>
+        <Text style={styles.setupSub}>
+          Grant notification access so PesaLog detects M-Pesa SMS automatically
+        </Text>
+        <TouchableOpacity style={styles.setupBtn} onPress={requestNotificationAccess}>
+          <Text style={styles.setupBtnText}>Grant Access →</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* SMS Input */}
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>Paste your M-Pesa SMS</Text>
+        <Text style={styles.cardLabel}>Or paste your M-Pesa SMS manually</Text>
         <TextInput
           style={styles.smsInput}
           multiline
@@ -152,8 +180,40 @@ useEffect(() => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.tip}>💡 SMS overlay will pop up automatically when M-Pesa message arrives</Text>
+      {/* Test buttons */}
+      <TouchableOpacity
+        style={[styles.parseBtn, { backgroundColor: '#6B46C1', marginBottom: 8 }]}
+        onPress={() => {
+          const result = parseMpesaSMS(TEST_SMS);
+          if (result) {
+            setParsed(result);
+            setPickedCat(null);
+            setPlanned(null);
+            setNote('');
+            setStep(1);
+            setSaved(false);
+            setShowOverlay(true);
+          }
+        }}
+      >
+        <Text style={styles.parseBtnText}>🧪 Test overlay (JS)</Text>
+      </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.parseBtn, { backgroundColor: '#C05621', marginBottom: 16 }]}
+        onPress={() => {
+          DeviceEventEmitter.emit('onMpesaSmsReceived', TEST_SMS);
+        }}
+      >
+        <Text style={styles.parseBtnText}>🔔 Test SMS event (bridge)</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.tip}>
+        💡 Purple = tests JS overlay directly{'\n'}
+        🟠 Orange = tests the Java→JS bridge
+      </Text>
+
+      {/* Overlay Modal */}
       <Modal visible={showOverlay} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.sheet}>
@@ -268,6 +328,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5', padding: 16 },
   successBanner: { backgroundColor: '#E1F5EE', borderRadius: 10, padding: 12, marginBottom: 14 },
   successText: { color: '#085041', fontWeight: '500', textAlign: 'center' },
+  setupCard: {
+    backgroundColor: '#085041', borderRadius: 12,
+    padding: 16, marginBottom: 12,
+  },
+  setupTitle: { color: '#fff', fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  setupSub: { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 12, lineHeight: 18 },
+  setupBtn: {
+    backgroundColor: '#fff', borderRadius: 8,
+    padding: 10, alignItems: 'center',
+  },
+  setupBtnText: { color: '#085041', fontWeight: '600', fontSize: 14 },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12 },
   cardLabel: { fontSize: 13, color: '#666', marginBottom: 8 },
   smsInput: {
@@ -280,7 +351,7 @@ const styles = StyleSheet.create({
     padding: 13, marginTop: 10, alignItems: 'center',
   },
   parseBtnText: { color: '#fff', fontWeight: '500', fontSize: 15 },
-  tip: { fontSize: 12, color: '#999', textAlign: 'center', marginTop: 4 },
+  tip: { fontSize: 12, color: '#999', textAlign: 'center', marginTop: 4, lineHeight: 18 },
   modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: '#fff', borderTopLeftRadius: 20,
