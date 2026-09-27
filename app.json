@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "PesaLog",
-    "slug": "pesalog",
+    "name": "belize",
+    "slug": "belize",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,7 +17,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.pesalog.app",
+      "package": "com.belize.app",
       "permissions": [
         "android.permission.RECEIVE_SMS",
         "android.permission.READ_SMS",

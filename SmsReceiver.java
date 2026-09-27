@@ -1,4 +1,4 @@
-package com.pesalog.app;
+package com.belize.app;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,7 +16,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 public class SmsReceiver extends BroadcastReceiver {
 
-    private static final String TAG = "PesaLogSMS";
+    private static final String TAG = "belizeSMS";
 
     @Override
     public void onReceive(Context context, Intent intent) {

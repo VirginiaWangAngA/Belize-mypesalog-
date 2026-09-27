@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/mypesalog.iml" filepath="$PROJECT_DIR$/.idea/mypesalog.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/mybelize.iml" filepath="$PROJECT_DIR$/.idea/mybelize.iml" />
     </modules>
   </component>
 </project>

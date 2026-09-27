@@ -1,4 +1,4 @@
-package com.pesalog.app;
+package com.belize.app;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

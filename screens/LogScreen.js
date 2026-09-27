@@ -67,7 +67,7 @@ export default function LogScreen() {
   function requestNotificationAccess() {
     Alert.alert(
       'Enable Auto-Detection',
-      'PesaLog needs Notification Access to automatically detect M-Pesa transactions.\n\n1. Find PesaLog in the list\n2. Toggle it ON\n3. Come back to PesaLog',
+      'belize needs Notification Access to automatically detect M-Pesa transactions.\n\n1. Find belize in the list\n2. Toggle it ON\n3. Come back to belize',
       [
         { text: 'Later', style: 'cancel' },
         {
@@ -156,7 +156,7 @@ export default function LogScreen() {
       <View style={styles.setupCard}>
         <Text style={styles.setupTitle}>⚡ Enable Auto-Detection</Text>
         <Text style={styles.setupSub}>
-          Grant notification access so PesaLog detects M-Pesa SMS automatically
+          Grant notification access so belize detects M-Pesa SMS automatically
         </Text>
         <TouchableOpacity style={styles.setupBtn} onPress={requestNotificationAccess}>
           <Text style={styles.setupBtnText}>Grant Access →</Text>
